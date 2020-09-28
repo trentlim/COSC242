@@ -1,78 +1,79 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include "mylib.h"
 #include "htable.h"
+#include <stdlib.h>
+#include "mylib.h"
 
-struct htablerec{
+struct htablerec {
     int capacity;
     int num_keys;
     char **keys;
 };
 
-static unsigned int htable_word_to_int(char *word){
+static unsigned int htable_word_to_int(char *word) {
     unsigned int result = 0;
 
-    while (*word != '\0'){
+    while (*word != '\0') {
         result = (*word++ + 31 * result);
     }
     return result;
 }
 
-static unsigned int htable_hash(htable h, unsigned int i_key){
-    return i_key % h->capacity;
+
+
+htable htable_new(int capacity) {
+
+
+    htable table = emalloc(sizeof *table);
+    table ->capacity = capacity;
+    table -> num_keys =0;
+    table -> keys = calloc(capacity, sizeof(char*));
+
+
+    return table;
+
 }
 
-htable htable_new(int capacity){
+void htable_free(htable h) {
     int i;
-    htable result = emalloc(sizeof * result);
-    result->capacity = capacity;
-    result->num_keys = 0;
-    result->keys = emalloc(result->capacity * sizeof result->keys[0]);
-
-    for (i = capacity; i < capacity; i++){
-        result->keys[i] = NULL;
-    }
-    return result;
-}
-
-void htable_free(htable h){
-    int i;
-    for (i = 0; i < h->capacity; i++){
-        if (h->keys[i] != NULL){
+    for(i=0; i < h->capacity; i++){
+        if(h->keys[i] != NULL){
             free(h->keys[i]);
         }
     }
     free(h->keys);
     free(h);
+
+
+
 }
 
-int htable_insert (htable h, char *str){
-    unsigned int word, pos, i;
+int htable_insert(htable h, char *key) {
 
-    word = htable_word_to_int(str);
-    pos = htable_hash(h, word);
-    i = pos;
+    int i = htable_word_to_int(key) %h->capacity;
+    int col =0;
 
-    do{
-        if (h->keys[i] == NULL){
-            h->keys[i] = emalloc((strlen(str)+1) * sizeof (char));
-            strcpy(h->keys[i], str);
+    while(col < h->capacity){
+        if(h-> keys[i] == NULL){
+            h->keys[i] = emalloc((strlen(key)+1) *sizeof key[0]);
+            strcpy(h->keys[i],key);
             h->num_keys++;
             return 1;
-        } else if (strcmp(h->keys[i], str) == 0){
-            return 0;
         }
-        i = (i+1)%h->capacity;
-    } while (i != pos);
+        if(!strcmp(h->keys[i],key)){
+            return 1;
+        }
+        i++;
+        col++;
+        i = i % h->capacity;
+    }
     return 0;
 }
 
-
-void htable_print(htable h, FILE *stream){
+void htable_print(htable h, FILE *stream) {
     int i;
-
-    for (i = 0; i < h->capacity; i++){
+    for (i = 0; i < h->capacity; i++) {
         fprintf(stream, "%2d %s\n", i, h->keys[i] == NULL ? "" : h->keys[i]);
     }
+
 }
